@@ -74,6 +74,7 @@ namespace SkeletonBind {
 			this->Controls->Add(this->panel1);
 			this->Name = L"MainForm";
 			this->Text = L"MainForm";
+			this->KeyDown += gcnew System::Windows::Forms::KeyEventHandler(this, &MainForm::MainForm_KeyDown);
 			this->ResumeLayout(false);
 
 		}
@@ -132,5 +133,8 @@ namespace SkeletonBind {
 	private: System::Void panel1_MouseMove(System::Object^  sender, System::Windows::Forms::MouseEventArgs^  e) {
 		//System::Diagnostics::Debug::WriteLine("MouseMove");
 	}
-	};
+	private: System::Void MainForm_KeyDown(System::Object^  sender, System::Windows::Forms::KeyEventArgs^  e) {
+		System::Diagnostics::Debug::WriteLine(e->KeyCode);
+	}
+};
 }
