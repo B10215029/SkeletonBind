@@ -1,7 +1,11 @@
 #pragma once
 #include <Windows.h>
 #include "DrawTexture.h"
+#include "DrawSkeleton.h"
+#include "SkeletonData.h"
 #include "ShaderUtility.h"
+#include <math.h>
+#include <stdio.h>
 
 namespace SkeletonBind {
 
@@ -21,12 +25,13 @@ namespace SkeletonBind {
 		MainForm(void)
 		{
 			InitializeComponent();
-			//
-			//TODO:  在此加入建構函式程式碼
-			//
 			hGLRC = NULL;
 			hDC = GetDC((HWND)(this->panel1->Handle.ToInt32()));
 			drawTexture = new DrawTexture();
+			drawSkeleton = new DrawSkeleton();
+			skeletonData = new SkeletonData();
+			selectPoint = -1;
+			selectPosition = new int[2];
 			initializeSkeletonData();
 			initializeOpenGLContext();
 			reshape(this->panel1->Width, this->panel1->Height);
@@ -46,6 +51,8 @@ namespace SkeletonBind {
 					wglDeleteContext(hGLRC);
 				}
 				delete drawTexture;
+				delete drawSkeleton;
+				delete skeletonData;
 				delete components;
 			}
 		}
@@ -58,6 +65,11 @@ namespace SkeletonBind {
 		HDC hDC;
 		HGLRC hGLRC;
 		DrawTexture* drawTexture;
+		DrawSkeleton* drawSkeleton;
+		SkeletonData* skeletonData;
+		int selectPoint;
+		int* selectPosition;
+		System::Drawing::Bitmap^ bitmap;
 	private: System::Windows::Forms::StatusStrip^  statusStrip1;
 	private: System::Windows::Forms::ToolStripStatusLabel^  toolStripStatusLabel1;
 	protected:
@@ -130,47 +142,18 @@ namespace SkeletonBind {
 		}
 #pragma endregion
 	private: System::Void panel1_DragDrop(System::Object^  sender, System::Windows::Forms::DragEventArgs^  e) {
-		//System::Diagnostics::Debug::WriteLine(((array<String^>^)(e->Data->GetData(DataFormats::FileDrop)))[0]);
-		//panel1->BackgroundImage = System::Drawing::Image::FromFile(((array<String^>^)(e->Data->GetData(DataFormats::FileDrop)))[0]);
-		//System::Diagnostics::Debug::WriteLine(panel1->BackgroundImage->PixelFormat);
-		//this->statusStrip1->Text = ((array<String^>^)(e->Data->GetData(DataFormats::FileDrop)))[0];
 		toolStripStatusLabel1->Text = ((array<String^>^)(e->Data->GetData(DataFormats::FileDrop)))[0];
-		System::Drawing::Bitmap^ bitmap = gcnew System::Drawing::Bitmap(((array<String^>^)(e->Data->GetData(DataFormats::FileDrop)))[0]);
-		//System::Diagnostics::Debug::WriteLine(bitmap->PixelFormat);
+		bitmap = gcnew System::Drawing::Bitmap(((array<String^>^)(e->Data->GetData(DataFormats::FileDrop)))[0]);
 		System::Drawing::Rectangle rect = System::Drawing::Rectangle(0, 0, bitmap->Width, bitmap->Height);
 		System::Drawing::Imaging::BitmapData^ bitmapData = bitmap->LockBits(rect, System::Drawing::Imaging::ImageLockMode::ReadOnly, bitmap->PixelFormat);
 		unsigned char* data = (unsigned char*)bitmapData->Scan0.ToPointer();
 		if (bitmap->PixelFormat == System::Drawing::Imaging::PixelFormat::Format24bppRgb) {
-			//int p = 0;
-			//for (int y = 0; y < bitmap->Height; y++) {
-			//	for (int x = 0; x < bitmap->Width; x++) {
-			//		int c = data[p + 0] + data[p + 1] + data[p + 2];
-			//		c /= 3;
-			//		data[p + 0] = c;
-			//		data[p + 1] = c;
-			//		data[p + 2] = c;
-			//		p += 3;
-			//	}
-			//}
 			drawTexture->setTexture(loadTextureFromArray(data, bitmap->Width, bitmap->Height, 3));
 		}
 		else if (bitmap->PixelFormat == System::Drawing::Imaging::PixelFormat::Format32bppArgb) {
-			//int p = 0;
-			//for (int y = 0; y < bitmap->Height; y++) {
-			//	for (int x = 0; x < bitmap->Width; x++) {
-			//		int c = data[p + 0] + data[p + 1] + data[p + 2];
-			//		c /= 3;
-			//		data[p + 0] = c;
-			//		data[p + 1] = c;
-			//		data[p + 2] = c;
-			//		//data[p + 3] = 0;
-			//		p += 4;
-			//	}
-			//}
 			drawTexture->setTexture(loadTextureFromArray(data, bitmap->Width, bitmap->Height, 4));
 		}
 		bitmap->UnlockBits(bitmapData);
-		//panel1->BackgroundImage = bitmap;
 		display();
 	}
 	private: System::Void panel1_DragEnter(System::Object^  sender, System::Windows::Forms::DragEventArgs^  e) {
@@ -180,17 +163,38 @@ namespace SkeletonBind {
 			e->Effect = DragDropEffects::None;
 	}
 	private: System::Void panel1_MouseDown(System::Object^  sender, System::Windows::Forms::MouseEventArgs^  e) {
-		//System::Diagnostics::Debug::WriteLine("MouseDown");
-		System::Diagnostics::Debug::WriteLine(e->Location);
+		float x = (float)e->X / panel1->Width * 2 - 1;
+		float y = (float)e->Y / panel1->Height * -2 + 1;
+		for (int i = SkeletonData::Joint_Count - 1; i >= 0; i--) {
+			float lengthX = fabs(skeletonData->data[SkeletonData::drawPointIndices[i]][0] - x) * panel1->Width;
+			float lengthY = fabs(skeletonData->data[SkeletonData::drawPointIndices[i]][1] - y) * panel1->Height;
+			if (lengthX < POINT_SIZE && lengthY < POINT_SIZE) {
+				selectPoint = SkeletonData::drawPointIndices[i];
+				selectPosition[0] = e->X;
+				selectPosition[1] = e->Y;
+				break;
+			}
+		}
 	}
 	private: System::Void panel1_MouseUp(System::Object^  sender, System::Windows::Forms::MouseEventArgs^  e) {
-		//System::Diagnostics::Debug::WriteLine("MouseUp");
+		System::Diagnostics::Debug::WriteLine(e->Location);
+		selectPoint = -1;
 	}
 	private: System::Void panel1_MouseMove(System::Object^  sender, System::Windows::Forms::MouseEventArgs^  e) {
-		//System::Diagnostics::Debug::WriteLine("MouseMove");
+		if (selectPoint != -1) {
+			float dx = (float)(e->X - selectPosition[0]) / panel1->Width * 2;
+			float dy = (float)(e->Y - selectPosition[1]) / panel1->Height * -2;
+			skeletonData->data[selectPoint][0] += dx;
+			skeletonData->data[selectPoint][1] += dy;
+			selectPosition[0] = e->X;
+			selectPosition[1] = e->Y;
+			display();
+		}
 	}
 	private: System::Void MainForm_KeyDown(System::Object^  sender, System::Windows::Forms::KeyEventArgs^  e) {
 		System::Diagnostics::Debug::WriteLine(e->KeyCode);
+		if (e->KeyCode == Keys::Space)
+			System::Diagnostics::Debug::WriteLine("save");
 	}
 	private: System::Void panel1_Resize(System::Object^  sender, System::EventArgs^  e) {
 		reshape(this->panel1->Width, this->panel1->Height);

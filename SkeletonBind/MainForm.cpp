@@ -40,6 +40,7 @@ bool SkeletonBind::MainForm::initializeOpenGLContext()
 		return false;
 	}
 	drawTexture->initialize();
+	drawSkeleton->initialize();
 	return true;
 }
 
@@ -47,15 +48,17 @@ void SkeletonBind::MainForm::reshape(int width, int height)
 {
 	std::cout << "width = " << width << ", height = " << height << std::endl;
 	drawTexture->reshape(width, height);
+	drawSkeleton->reshape(width, height);
 }
 
 void SkeletonBind::MainForm::display()
 {
-	std::cout << "draw" << std::endl;
+	//std::cout << "draw" << std::endl;
 	wglMakeCurrent(hDC, hGLRC);
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
 	drawTexture->display();
+	drawSkeleton->display(skeletonData);
 	SwapBuffers(hDC);
 }
 
