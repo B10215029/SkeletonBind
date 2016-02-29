@@ -28,6 +28,7 @@ public:
 	SkeletonData();
 	~SkeletonData();
 	void initialize();
+	void saveCSV(const char* filePath, int imageWidth, int imageHeight);
 	float data[Joint_Count][2];
 
 private:

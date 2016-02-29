@@ -154,6 +154,7 @@ namespace SkeletonBind {
 			drawTexture->setTexture(loadTextureFromArray(data, bitmap->Width, bitmap->Height, 4));
 		}
 		bitmap->UnlockBits(bitmapData);
+		skeletonData->initialize();
 		display();
 	}
 	private: System::Void panel1_DragEnter(System::Object^  sender, System::Windows::Forms::DragEventArgs^  e) {
@@ -193,8 +194,10 @@ namespace SkeletonBind {
 	}
 	private: System::Void MainForm_KeyDown(System::Object^  sender, System::Windows::Forms::KeyEventArgs^  e) {
 		System::Diagnostics::Debug::WriteLine(e->KeyCode);
-		if (e->KeyCode == Keys::Space)
-			System::Diagnostics::Debug::WriteLine("save");
+		if (e->KeyCode == Keys::Space) {
+			skeletonData->saveCSV("a.csv", bitmap->Width, bitmap->Height);
+			toolStripStatusLabel1->Text = "save file";
+		}
 	}
 	private: System::Void panel1_Resize(System::Object^  sender, System::EventArgs^  e) {
 		reshape(this->panel1->Width, this->panel1->Height);

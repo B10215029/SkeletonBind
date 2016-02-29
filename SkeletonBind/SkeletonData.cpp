@@ -1,4 +1,6 @@
 #include "SkeletonData.h"
+#include <fstream>
+
 //	Joint_AnkleRight = 0,
 //	Joint_KneeRight = 1,
 //	Joint_HipRight = 2,
@@ -136,4 +138,15 @@ void SkeletonData::initialize()
 	data[12][1] =  0.5;
 	data[13][0] =  0;
 	data[13][1] =  0.8;
+}
+
+void SkeletonData::saveCSV(const char* filePath, int imageWidth, int imageHeight)
+{
+	std::ofstream outputStream(filePath);
+	for (int i = 0; i < Joint_Count; i++) {
+		int x = (1 + data[i][0]) / 2 * imageWidth;
+		int y = (1 - data[i][1]) / 2 * imageHeight;
+		outputStream << x << "," << y << std::endl;
+	}
+	outputStream.close();
 }
