@@ -5,7 +5,7 @@
 #include "SkeletonData.h"
 #include "ShaderUtility.h"
 #include <math.h>
-#include <stdio.h>
+#include <iostream>
 
 namespace SkeletonBind {
 
@@ -24,6 +24,10 @@ namespace SkeletonBind {
 	public:
 		MainForm(void)
 		{
+			FreeConsole();
+			//HWND handleWindow = FindWindowA("ConsoleWindowClass", NULL);
+			//ShowWindow(handleWindow, SW_HIDE);
+
 			InitializeComponent();
 			hGLRC = NULL;
 			hDC = GetDC((HWND)(this->panel1->Handle.ToInt32()));
@@ -32,7 +36,7 @@ namespace SkeletonBind {
 			skeletonData = new SkeletonData();
 			selectPoint = -1;
 			selectPosition = new int[2];
-			initializeSkeletonData();
+			imageFileName = "";
 			initializeOpenGLContext();
 			reshape(this->panel1->Width, this->panel1->Height);
 			display();
@@ -59,7 +63,7 @@ namespace SkeletonBind {
 		bool initializeOpenGLContext();
 		void reshape(int width, int height);
 		void display();
-		void initializeSkeletonData();
+		void saveImage();
 	private: System::Windows::Forms::Panel^  panel1;
 	protected:
 		HDC hDC;
@@ -70,6 +74,7 @@ namespace SkeletonBind {
 		int selectPoint;
 		int* selectPosition;
 		System::Drawing::Bitmap^ bitmap;
+		System::String^ imageFileName;
 	private: System::Windows::Forms::StatusStrip^  statusStrip1;
 	private: System::Windows::Forms::ToolStripStatusLabel^  toolStripStatusLabel1;
 	protected:
@@ -142,8 +147,9 @@ namespace SkeletonBind {
 		}
 #pragma endregion
 	private: System::Void panel1_DragDrop(System::Object^  sender, System::Windows::Forms::DragEventArgs^  e) {
-		toolStripStatusLabel1->Text = ((array<String^>^)(e->Data->GetData(DataFormats::FileDrop)))[0];
-		bitmap = gcnew System::Drawing::Bitmap(((array<String^>^)(e->Data->GetData(DataFormats::FileDrop)))[0]);
+		imageFileName = ((array<String^>^)(e->Data->GetData(DataFormats::FileDrop)))[0];
+		toolStripStatusLabel1->Text = imageFileName;
+		bitmap = gcnew System::Drawing::Bitmap(imageFileName);
 		System::Drawing::Rectangle rect = System::Drawing::Rectangle(0, 0, bitmap->Width, bitmap->Height);
 		System::Drawing::Imaging::BitmapData^ bitmapData = bitmap->LockBits(rect, System::Drawing::Imaging::ImageLockMode::ReadOnly, bitmap->PixelFormat);
 		unsigned char* data = (unsigned char*)bitmapData->Scan0.ToPointer();
@@ -178,10 +184,12 @@ namespace SkeletonBind {
 		}
 	}
 	private: System::Void panel1_MouseUp(System::Object^  sender, System::Windows::Forms::MouseEventArgs^  e) {
-		System::Diagnostics::Debug::WriteLine(e->Location);
+		//System::Diagnostics::Debug::WriteLine(e->Location);
 		selectPoint = -1;
 	}
 	private: System::Void panel1_MouseMove(System::Object^  sender, System::Windows::Forms::MouseEventArgs^  e) {
+		if (e->X < 0 || e->X > panel1->Width || e->Y < 0 || e->Y > panel1->Height)
+			selectPoint = -1;
 		if (selectPoint != -1) {
 			float dx = (float)(e->X - selectPosition[0]) / panel1->Width * 2;
 			float dy = (float)(e->Y - selectPosition[1]) / panel1->Height * -2;
@@ -194,13 +202,18 @@ namespace SkeletonBind {
 	}
 	private: System::Void MainForm_KeyDown(System::Object^  sender, System::Windows::Forms::KeyEventArgs^  e) {
 		System::Diagnostics::Debug::WriteLine(e->KeyCode);
-		if (e->KeyCode == Keys::Space) {
-			skeletonData->saveCSV("a.csv", bitmap->Width, bitmap->Height);
+		if (e->KeyCode == Keys::Space && bitmap != nullptr) {
+			const char* chars = (const char*)(Runtime::InteropServices::Marshal::StringToHGlobalAnsi(imageFileName)).ToPointer();
+			std::string str = chars;
+			str = str + ".csv";
+			Runtime::InteropServices::Marshal::FreeHGlobal(IntPtr((void*)chars));
+			skeletonData->saveCSV(str.c_str(), bitmap->Width, bitmap->Height);
+			saveImage();
 			toolStripStatusLabel1->Text = "save file";
 		}
 	}
 	private: System::Void panel1_Resize(System::Object^  sender, System::EventArgs^  e) {
-		reshape(this->panel1->Width, this->panel1->Height);
+		reshape(panel1->Width, panel1->Height);
 		display();
 	}
 };
