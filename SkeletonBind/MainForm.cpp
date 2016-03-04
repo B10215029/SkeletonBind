@@ -2,8 +2,9 @@
 #include <iostream>
 #include <GL\glew.h>
 
-bool SkeletonBind::MainForm::initializeOpenGLContext()
+HGLRC SkeletonBind::MainForm::initializeOpenGLContext(HDC hDC)
 {
+	HGLRC hGLRC = NULL;
 	// Set pixel format
 	PIXELFORMATDESCRIPTOR pfd;
 	memset(&pfd, 0, sizeof(PIXELFORMATDESCRIPTOR));
@@ -40,30 +41,29 @@ bool SkeletonBind::MainForm::initializeOpenGLContext()
 		return false;
 	}
 	std::cout << "init ok" << std::endl;
-	drawTexture->initialize();
-	drawSkeleton->initialize();
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-	return true;
+	return hGLRC;
 }
 
-void SkeletonBind::MainForm::reshape(int width, int height)
+void SkeletonBind::MainForm::reshape(HDC hDC, HGLRC hGLRC, int width, int height)
 {
 	//std::cout << "width = " << width << ", height = " << height << std::endl;
-	drawTexture->reshape(width, height);
-	drawSkeleton->reshape(width, height);
+	wglMakeCurrent(hDC, hGLRC);
+	//drawTexture->reshape(width, height);
+	//drawSkeleton->reshape(width, height);
 	glViewport(0, 0, width, height);
 }
 
-void SkeletonBind::MainForm::display()
+void SkeletonBind::MainForm::display(HDC hDC, HGLRC hGLRC, DrawTexture* drawTexture, DrawSkeleton* drawSkeleton)
 {
-	//std::cout << "draw" << std::endl;
 	wglMakeCurrent(hDC, hGLRC);
 	glClear(GL_COLOR_BUFFER_BIT);
-	drawTexture->display();
-	drawSkeleton->display(skeletonData);
+	if (drawTexture)
+		drawTexture->display();
+	if (drawSkeleton)
+		drawSkeleton->display(skeletonData);
 	SwapBuffers(hDC);
 }
-
 
 void SkeletonBind::MainForm::saveImage()
 {
@@ -72,7 +72,7 @@ void SkeletonBind::MainForm::saveImage()
 	System::Drawing::Imaging::BitmapData^ bitmapData = outputBitmap->LockBits(rect, System::Drawing::Imaging::ImageLockMode::ReadOnly, outputBitmap->PixelFormat);
 	unsigned char* data = (unsigned char*)bitmapData->Scan0.ToPointer();
 
-	wglMakeCurrent(hDC, hGLRC);
+	wglMakeCurrent(hDC2, hGLRC2);
 
 	GLuint framebufferHandle;
 	glGenFramebuffers(1, &framebufferHandle);
@@ -92,10 +92,10 @@ void SkeletonBind::MainForm::saveImage()
 		std::cerr << "Framebuffer Error!" << std::endl;
 
 
-	glPointSize(POINT_SIZE * ((float)(bitmap->Width) / panel1->Width));
-	glLineWidth(LINE_WIDTH * ((float)(bitmap->Width) / panel1->Width));
-	reshape(bitmap->Width, bitmap->Height);
-	display();
+	glPointSize(POINT_SIZE * ((float)(bitmap->Width) / panel2->Width));
+	glLineWidth(LINE_WIDTH * ((float)(bitmap->Width) / panel2->Width));
+	reshape(hDC2, hGLRC2, bitmap->Width, bitmap->Height);
+	display(hDC2, hGLRC2, drawTexture2, drawSkeleton2);
 
 	glBindTexture(GL_TEXTURE_2D, textureHandle);
 	glPixelStorei(GL_PACK_ALIGNMENT, 1);
@@ -110,8 +110,8 @@ void SkeletonBind::MainForm::saveImage()
 
 	glPointSize(POINT_SIZE);
 	glLineWidth(LINE_WIDTH);
-	reshape(panel1->Width, panel1->Height);
-	display();
+	reshape(hDC2, hGLRC2, panel2->Width, panel2->Height);
+	display(hDC2, hGLRC2, drawTexture2, drawSkeleton2);
 
 	outputBitmap->UnlockBits(bitmapData);
 	outputBitmap->RotateFlip(System::Drawing::RotateFlipType::RotateNoneFlipY);
@@ -120,7 +120,6 @@ void SkeletonBind::MainForm::saveImage()
 	String^ str = String::Empty;
 	for (int i = 0; i < words->Length - 1; i++)
 		str += words[i] + ".";
-	str += "skeleton.";
-	str += words[words->Length - 1];
-	outputBitmap->Save(str, bitmap->RawFormat);
+	str += "skeleton_" + currentFrame.ToString("D6") + ".png";
+	outputBitmap->Save(str, System::Drawing::Imaging::ImageFormat::Png);
 }
