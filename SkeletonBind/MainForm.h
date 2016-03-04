@@ -6,6 +6,7 @@
 #include "ShaderUtility.h"
 #include <math.h>
 #include <iostream>
+#include <fstream>
 
 namespace SkeletonBind {
 
@@ -24,7 +25,7 @@ namespace SkeletonBind {
 	public:
 		MainForm(void)
 		{
-			FreeConsole();
+			//FreeConsole();
 			//HWND handleWindow = FindWindowA("ConsoleWindowClass", NULL);
 			//ShowWindow(handleWindow, SW_HIDE);
 
@@ -40,6 +41,18 @@ namespace SkeletonBind {
 			initializeOpenGLContext();
 			reshape(this->panel1->Width, this->panel1->Height);
 			display();
+
+
+			mediaPlayer = gcnew System::Windows::Media::MediaPlayer();
+			mediaPlayer->Open(gcnew Uri("C:\\Users\\Delim\\Desktop\\video2.mp4"));
+			while (mediaPlayer->DownloadProgress != 1) {
+				std::cout << "not yet" << std::endl;
+				System::Threading::Thread::Sleep(0.5 * 1000);
+			}
+			std::cout << "ok" << std::endl;
+			mediaPlayer->ScrubbingEnabled = true;
+			mediaPlayer->Play();
+			timer1->Enabled = true;
 		}
 
 	protected:
@@ -50,6 +63,7 @@ namespace SkeletonBind {
 		{
 			if (components)
 			{
+				mediaPlayer->Close();
 				if (hGLRC) {
 					wglMakeCurrent(NULL, NULL);
 					wglDeleteContext(hGLRC);
@@ -58,6 +72,7 @@ namespace SkeletonBind {
 				delete drawSkeleton;
 				delete skeletonData;
 				delete components;
+				components = nullptr;
 			}
 		}
 		bool initializeOpenGLContext();
@@ -75,15 +90,18 @@ namespace SkeletonBind {
 		int* selectPosition;
 		System::Drawing::Bitmap^ bitmap;
 		System::String^ imageFileName;
+		System::Windows::Media::MediaPlayer^ mediaPlayer;
 	private: System::Windows::Forms::StatusStrip^  statusStrip1;
 	private: System::Windows::Forms::ToolStripStatusLabel^  toolStripStatusLabel1;
+	private: System::Windows::Forms::Timer^  timer1;
+	private: System::ComponentModel::IContainer^  components;
 	protected:
 
 	private:
 		/// <summary>
 		/// 設計工具所需的變數。
 		/// </summary>
-		System::ComponentModel::Container ^components;
+
 
 #pragma region Windows Form Designer generated code
 		/// <summary>
@@ -92,9 +110,11 @@ namespace SkeletonBind {
 		/// </summary>
 		void InitializeComponent(void)
 		{
+			this->components = (gcnew System::ComponentModel::Container());
 			this->panel1 = (gcnew System::Windows::Forms::Panel());
 			this->statusStrip1 = (gcnew System::Windows::Forms::StatusStrip());
 			this->toolStripStatusLabel1 = (gcnew System::Windows::Forms::ToolStripStatusLabel());
+			this->timer1 = (gcnew System::Windows::Forms::Timer(this->components));
 			this->statusStrip1->SuspendLayout();
 			this->SuspendLayout();
 			// 
@@ -128,6 +148,11 @@ namespace SkeletonBind {
 			// 
 			this->toolStripStatusLabel1->Name = L"toolStripStatusLabel1";
 			this->toolStripStatusLabel1->Size = System::Drawing::Size(0, 17);
+			// 
+			// timer1
+			// 
+			this->timer1->Interval = 30;
+			this->timer1->Tick += gcnew System::EventHandler(this, &MainForm::timer1_Tick);
 			// 
 			// MainForm
 			// 
@@ -216,5 +241,53 @@ namespace SkeletonBind {
 		reshape(panel1->Width, panel1->Height);
 		display();
 	}
+private: System::Void timer1_Tick(System::Object^  sender, System::EventArgs^  e) {
+	System::Windows::Media::Imaging::RenderTargetBitmap^ rtb = gcnew System::Windows::Media::Imaging::RenderTargetBitmap(mediaPlayer->NaturalVideoWidth, mediaPlayer->NaturalVideoHeight, 96, 96, System::Windows::Media::PixelFormats::Pbgra32);
+	System::Windows::Media::DrawingVisual^ dv = gcnew System::Windows::Media::DrawingVisual();
+	System::Windows::Media::DrawingContext^ dc = dv->RenderOpen();
+	System::Windows::Rect rect(System::Windows::Point(0, 0), System::Windows::Size(mediaPlayer->NaturalVideoWidth, mediaPlayer->NaturalVideoHeight));
+
+	dc = dv->RenderOpen();
+	dc->DrawVideo(mediaPlayer, rect);
+	dc->Close();
+	rtb->Render(dv);
+
+
+
+	//System::IO::FileStream^ stream = gcnew System::IO::FileStream("C:\\Users\\Delim\\Desktop\\a\\" +
+	//	System::Convert::ToString(System::DateTime::Now.Minute) + "_" +
+	//	System::Convert::ToString(System::DateTime::Now.Second) + "_" +
+	//	System::Convert::ToString(System::DateTime::Now.Millisecond) + 
+	//	"b.png", System::IO::FileMode::Create);
+	//System::Windows::Media::Imaging::PngBitmapEncoder^ coder = gcnew System::Windows::Media::Imaging::PngBitmapEncoder();
+	//coder->Interlace = System::Windows::Media::Imaging::PngInterlaceOption::Off;
+	//coder->Frames->Add(System::Windows::Media::Imaging::BitmapFrame::Create(rtb));
+	//coder->Save(stream);
+	//stream->Close();
+
+
+
+	System::IO::MemoryStream^ memoryStream = gcnew System::IO::MemoryStream();
+	System::Windows::Media::Imaging::PngBitmapEncoder^ coder = gcnew System::Windows::Media::Imaging::PngBitmapEncoder();
+	coder->Interlace = System::Windows::Media::Imaging::PngInterlaceOption::Off;
+	coder->Frames->Add(System::Windows::Media::Imaging::BitmapFrame::Create(rtb));
+	coder->Save(memoryStream);
+
+	//System::Drawing::Bitmap^ bmp = gcnew System::Drawing::Bitmap(memoryStream);
+	//panel1->BackgroundImage = gcnew System::Drawing::Bitmap(memoryStream);
+
+	bitmap = gcnew System::Drawing::Bitmap(memoryStream);
+	System::Drawing::Rectangle rect2 = System::Drawing::Rectangle(0, 0, bitmap->Width, bitmap->Height);
+	System::Drawing::Imaging::BitmapData^ bitmapData = bitmap->LockBits(rect2, System::Drawing::Imaging::ImageLockMode::ReadOnly, bitmap->PixelFormat);
+	unsigned char* data = (unsigned char*)bitmapData->Scan0.ToPointer();
+	if (bitmap->PixelFormat == System::Drawing::Imaging::PixelFormat::Format24bppRgb) {
+		drawTexture->setTexture(loadTextureFromArray(data, bitmap->Width, bitmap->Height, 3));
+	}
+	else if (bitmap->PixelFormat == System::Drawing::Imaging::PixelFormat::Format32bppArgb) {
+		drawTexture->setTexture(loadTextureFromArray(data, bitmap->Width, bitmap->Height, 4));
+	}
+	bitmap->UnlockBits(bitmapData);
+	display();
+}
 };
 }
