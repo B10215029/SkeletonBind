@@ -8,6 +8,8 @@
 #include <iostream>
 #include <fstream>
 
+#define FRAME_PRE_SECOND 29
+
 namespace SkeletonBind {
 
 	using namespace System;
@@ -44,7 +46,7 @@ namespace SkeletonBind {
 
 
 			mediaPlayer = gcnew System::Windows::Media::MediaPlayer();
-			mediaPlayer->Open(gcnew Uri("C:\\Users\\Delim\\Desktop\\video2.mp4"));
+			mediaPlayer->Open(gcnew Uri("C:\\Users\\Delim\\Desktop\\video.mp4"));
 			while (mediaPlayer->DownloadProgress != 1) {
 				std::cout << "not yet" << std::endl;
 				System::Threading::Thread::Sleep(0.5 * 1000);
@@ -52,6 +54,7 @@ namespace SkeletonBind {
 			std::cout << "ok" << std::endl;
 			mediaPlayer->ScrubbingEnabled = true;
 			mediaPlayer->Play();
+			timer1->Interval = 1.0 / FRAME_PRE_SECOND * 1000;
 			timer1->Enabled = true;
 		}
 
@@ -244,49 +247,18 @@ namespace SkeletonBind {
 private: System::Void timer1_Tick(System::Object^  sender, System::EventArgs^  e) {
 	System::Windows::Media::Imaging::RenderTargetBitmap^ rtb = gcnew System::Windows::Media::Imaging::RenderTargetBitmap(mediaPlayer->NaturalVideoWidth, mediaPlayer->NaturalVideoHeight, 96, 96, System::Windows::Media::PixelFormats::Pbgra32);
 	System::Windows::Media::DrawingVisual^ dv = gcnew System::Windows::Media::DrawingVisual();
-	System::Windows::Media::DrawingContext^ dc = dv->RenderOpen();
+	System::Windows::Media::DrawingContext^ dc;
 	System::Windows::Rect rect(System::Windows::Point(0, 0), System::Windows::Size(mediaPlayer->NaturalVideoWidth, mediaPlayer->NaturalVideoHeight));
 
 	dc = dv->RenderOpen();
 	dc->DrawVideo(mediaPlayer, rect);
 	dc->Close();
 	rtb->Render(dv);
-
-
-
-	//System::IO::FileStream^ stream = gcnew System::IO::FileStream("C:\\Users\\Delim\\Desktop\\a\\" +
-	//	System::Convert::ToString(System::DateTime::Now.Minute) + "_" +
-	//	System::Convert::ToString(System::DateTime::Now.Second) + "_" +
-	//	System::Convert::ToString(System::DateTime::Now.Millisecond) + 
-	//	"b.png", System::IO::FileMode::Create);
-	//System::Windows::Media::Imaging::PngBitmapEncoder^ coder = gcnew System::Windows::Media::Imaging::PngBitmapEncoder();
-	//coder->Interlace = System::Windows::Media::Imaging::PngInterlaceOption::Off;
-	//coder->Frames->Add(System::Windows::Media::Imaging::BitmapFrame::Create(rtb));
-	//coder->Save(stream);
-	//stream->Close();
-
-
-
-	System::IO::MemoryStream^ memoryStream = gcnew System::IO::MemoryStream();
-	System::Windows::Media::Imaging::PngBitmapEncoder^ coder = gcnew System::Windows::Media::Imaging::PngBitmapEncoder();
-	coder->Interlace = System::Windows::Media::Imaging::PngInterlaceOption::Off;
-	coder->Frames->Add(System::Windows::Media::Imaging::BitmapFrame::Create(rtb));
-	coder->Save(memoryStream);
-
-	//System::Drawing::Bitmap^ bmp = gcnew System::Drawing::Bitmap(memoryStream);
-	//panel1->BackgroundImage = gcnew System::Drawing::Bitmap(memoryStream);
-
-	bitmap = gcnew System::Drawing::Bitmap(memoryStream);
-	System::Drawing::Rectangle rect2 = System::Drawing::Rectangle(0, 0, bitmap->Width, bitmap->Height);
-	System::Drawing::Imaging::BitmapData^ bitmapData = bitmap->LockBits(rect2, System::Drawing::Imaging::ImageLockMode::ReadOnly, bitmap->PixelFormat);
-	unsigned char* data = (unsigned char*)bitmapData->Scan0.ToPointer();
-	if (bitmap->PixelFormat == System::Drawing::Imaging::PixelFormat::Format24bppRgb) {
-		drawTexture->setTexture(loadTextureFromArray(data, bitmap->Width, bitmap->Height, 3));
-	}
-	else if (bitmap->PixelFormat == System::Drawing::Imaging::PixelFormat::Format32bppArgb) {
-		drawTexture->setTexture(loadTextureFromArray(data, bitmap->Width, bitmap->Height, 4));
-	}
-	bitmap->UnlockBits(bitmapData);
+	
+	array<byte>^ dataArray = gcnew array<byte>(rtb->PixelWidth * rtb->PixelHeight * rtb->Format.BitsPerPixel / 8);
+	rtb->CopyPixels(dataArray, rtb->PixelWidth * 4, 0);
+	pin_ptr<System::Byte> dataPtr = &dataArray[0];
+	drawTexture->setTexture(loadTextureFromArray(dataPtr, rtb->PixelWidth, rtb->PixelHeight, rtb->Format.BitsPerPixel / 8));
 	display();
 }
 };
