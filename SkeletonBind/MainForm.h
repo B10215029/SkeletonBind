@@ -63,15 +63,15 @@ namespace SkeletonBind {
 			display(hDC3, hGLRC3, NULL, drawSkeleton3);
 
 			mediaPlayer = gcnew System::Windows::Media::MediaPlayer();
-			mediaPlayer->Open(gcnew Uri("C:\\Users\\Delim\\Desktop\\video2.mp4"));
-			while (mediaPlayer->DownloadProgress != 1) {
-				std::cout << "not yet" << std::endl;
-				System::Threading::Thread::Sleep(0.5 * 1000);
-			}
-			std::cout << "ok" << std::endl;
+			//mediaPlayer->Open(gcnew Uri("C:\\Users\\Delim\\Desktop\\video2.mp4"));
+			//while (mediaPlayer->DownloadProgress != 1) {
+			//	std::cout << "not yet" << std::endl;
+			//	System::Threading::Thread::Sleep(0.5 * 1000);
+			//}
+			//std::cout << "ok" << std::endl;
 			mediaPlayer->ScrubbingEnabled = true;
-			mediaPlayer->Play();
-			trackBar1->Maximum = mediaPlayer->NaturalDuration.TimeSpan.TotalSeconds * FRAME_PRE_SECOND + FRAME_PRE_SECOND;
+			//mediaPlayer->Play();
+			//trackBar1->Maximum = mediaPlayer->NaturalDuration.TimeSpan.TotalSeconds * FRAME_PRE_SECOND + FRAME_PRE_SECOND;
 			timer1->Interval = 1.0 / FRAME_PRE_SECOND * 1000;
 			timer1->Enabled = true;
 		}
@@ -566,6 +566,10 @@ private: System::Windows::Forms::CheckBox^  checkBox1;
 		}
 		std::cout << "ok" << std::endl;
 		mediaPlayer->Play();
+		while (!mediaPlayer->NaturalDuration.HasTimeSpan) {
+			std::cout << "not yet" << std::endl;
+			System::Threading::Thread::Sleep(0.5 * 1000);
+		}
 		trackBar1->Maximum = mediaPlayer->NaturalDuration.TimeSpan.TotalSeconds * FRAME_PRE_SECOND + FRAME_PRE_SECOND;
 	}
 	private: System::Void panel1_DragEnter(System::Object^  sender, System::Windows::Forms::DragEventArgs^  e) {
@@ -600,6 +604,8 @@ private: System::Windows::Forms::CheckBox^  checkBox1;
 		display(hDC1, hGLRC1, drawTexture1, NULL);
 	}
 private: System::Void timer1_Tick(System::Object^  sender, System::EventArgs^  e) {
+	if (!mediaPlayer->HasVideo || !mediaPlayer->NaturalDuration.HasTimeSpan)
+		return;
 	System::Windows::Media::Imaging::RenderTargetBitmap^ rtb = gcnew System::Windows::Media::Imaging::RenderTargetBitmap(mediaPlayer->NaturalVideoWidth, mediaPlayer->NaturalVideoHeight, 96, 96, System::Windows::Media::PixelFormats::Pbgra32);
 	System::Windows::Media::DrawingVisual^ dv = gcnew System::Windows::Media::DrawingVisual();
 	System::Windows::Media::DrawingContext^ dc;
@@ -624,6 +630,7 @@ private: System::Void timer1_Tick(System::Object^  sender, System::EventArgs^  e
 		display(hDC3, hGLRC3, NULL, drawSkeleton3);
 
 		currentFrame = mediaPlayer->Position.TotalSeconds * FRAME_PRE_SECOND;
+		skeletonData->setFrame(currentFrame);
 		bitmap = gcnew System::Drawing::Bitmap(rtb->PixelWidth, rtb->PixelHeight, rtb->PixelWidth * rtb->PixelHeight * 4, System::Drawing::Imaging::PixelFormat::Format32bppArgb, IntPtr(dataPtr));
 	}
 
@@ -634,11 +641,14 @@ private: System::Void timer1_Tick(System::Object^  sender, System::EventArgs^  e
 
 }
 private: System::Void panel2_MouseDown(System::Object^  sender, System::Windows::Forms::MouseEventArgs^  e) {
+
+	if (skeletonData->data == NULL)
+		return;
 	float x = (float)e->X / panel2->Width * 2 - 1;
 	float y = (float)e->Y / panel2->Height * -2 + 1;
 	for (int i = SkeletonData::Joint_Count - 1; i >= 0; i--) {
-		float lengthX = fabs(skeletonData->data[SkeletonData::drawPointIndices[i]][0] - x) * panel1->Width;
-		float lengthY = fabs(skeletonData->data[SkeletonData::drawPointIndices[i]][1] - y) * panel1->Height;
+		float lengthX = fabs(skeletonData->data[SkeletonData::drawPointIndices[i] * 2 + 0] - x) * panel1->Width;
+		float lengthY = fabs(skeletonData->data[SkeletonData::drawPointIndices[i] * 2 + 1] - y) * panel1->Height;
 		if (lengthX < POINT_SIZE && lengthY < POINT_SIZE) {
 			selectPoint = SkeletonData::drawPointIndices[i];
 			selectPosition[0] = e->X;
@@ -649,13 +659,15 @@ private: System::Void panel2_MouseDown(System::Object^  sender, System::Windows:
 }
 
 private: System::Void panel2_MouseMove(System::Object^  sender, System::Windows::Forms::MouseEventArgs^  e) {
+	if (skeletonData->data == NULL)
+		return;
 	if (e->X < 0 || e->X > panel2->Width || e->Y < 0 || e->Y > panel2->Height)
 		selectPoint = -1;
 	if (selectPoint != -1) {
 		float dx = (float)(e->X - selectPosition[0]) / panel2->Width * 2;
 		float dy = (float)(e->Y - selectPosition[1]) / panel2->Height * -2;
-		skeletonData->data[selectPoint][0] += dx;
-		skeletonData->data[selectPoint][1] += dy;
+		skeletonData->data[selectPoint * 2 + 0] += dx;
+		skeletonData->data[selectPoint * 2 + 1] += dy;
 		selectPosition[0] = e->X;
 		selectPosition[1] = e->Y;
 		display(hDC2, hGLRC2, drawTexture2, drawSkeleton2);
@@ -721,6 +733,7 @@ private: System::Void button3_Click(System::Object^  sender, System::EventArgs^ 
 	rtb->Render(dv);
 
 	currentFrame = mediaPlayer->Position.TotalSeconds * FRAME_PRE_SECOND;
+	skeletonData->setFrame(currentFrame);
 
 	array<byte>^ dataArray = gcnew array<byte>(rtb->PixelWidth * rtb->PixelHeight * rtb->Format.BitsPerPixel / 8);
 	rtb->CopyPixels(dataArray, rtb->PixelWidth * 4, 0);
@@ -730,13 +743,7 @@ private: System::Void button3_Click(System::Object^  sender, System::EventArgs^ 
 	display(hDC2, hGLRC2, drawTexture2, drawSkeleton2);
 	display(hDC3, hGLRC3, NULL, drawSkeleton3);
 
-	System::IO::MemoryStream^ memoryStream = gcnew System::IO::MemoryStream();
-	System::Windows::Media::Imaging::PngBitmapEncoder^ coder = gcnew System::Windows::Media::Imaging::PngBitmapEncoder();
-	coder->Interlace = System::Windows::Media::Imaging::PngInterlaceOption::Off;
-	coder->Frames->Add(System::Windows::Media::Imaging::BitmapFrame::Create(rtb));
-	coder->Save(memoryStream);
-	bitmap = gcnew System::Drawing::Bitmap(memoryStream);
-	memoryStream->Close();
+	bitmap = gcnew System::Drawing::Bitmap(rtb->PixelWidth, rtb->PixelHeight, rtb->PixelWidth * rtb->PixelHeight * 4, System::Drawing::Imaging::PixelFormat::Format32bppArgb, IntPtr(dataPtr));
 }
 private: System::Void button4_Click(System::Object^  sender, System::EventArgs^  e) {
 	skeletonData->initialize();
@@ -752,7 +759,6 @@ private: System::Void button5_Click(System::Object^  sender, System::EventArgs^ 
 		skeletonData->saveCSV(str.c_str(), bitmap->Width, bitmap->Height);
 		saveImage();
 		toolStripStatusLabel1->Text = "save file";
-		// TODO
 	}
 }
 private: System::Void trackBar1_MouseDown(System::Object^  sender, System::Windows::Forms::MouseEventArgs^  e) {
@@ -768,13 +774,18 @@ private: System::Void button6_Click(System::Object^  sender, System::EventArgs^ 
 private: System::Void openVideoToolStripMenuItem_Click(System::Object^  sender, System::EventArgs^  e) {
 	if (openFileDialog1->ShowDialog() == System::Windows::Forms::DialogResult::OK) {
 		imageFileName = openFileDialog1->FileName;
-		mediaPlayer->Open(gcnew Uri(openFileDialog1->FileName));
+		toolStripStatusLabel1->Text = imageFileName;
+		mediaPlayer->Open(gcnew Uri(imageFileName));
 		while (mediaPlayer->DownloadProgress != 1) {
 			std::cout << "not yet" << std::endl;
 			System::Threading::Thread::Sleep(0.5 * 1000);
 		}
 		std::cout << "ok" << std::endl;
 		mediaPlayer->Play();
+		while (!mediaPlayer->NaturalDuration.HasTimeSpan) {
+			std::cout << "not yet" << std::endl;
+			System::Threading::Thread::Sleep(0.5 * 1000);
+		}
 		trackBar1->Maximum = mediaPlayer->NaturalDuration.TimeSpan.TotalSeconds * FRAME_PRE_SECOND + FRAME_PRE_SECOND;
 	}
 }
@@ -800,7 +811,13 @@ private: System::Void openPictureToolStripMenuItem_Click(System::Object^  sender
 	}
 }
 private: System::Void openCSVToolStripMenuItem_Click(System::Object^  sender, System::EventArgs^  e) {
-	// TODO
+	if (openFileDialog3->ShowDialog() == System::Windows::Forms::DialogResult::OK) {
+		imageFileName = openFileDialog3->FileName;
+		toolStripStatusLabel1->Text = imageFileName;
+		const char* chars = (const char*)(Runtime::InteropServices::Marshal::StringToHGlobalAnsi(imageFileName)).ToPointer();
+		skeletonData->readCSV(chars, mediaPlayer->NaturalVideoWidth, mediaPlayer->NaturalVideoHeight);
+		skeletonData->setFrame(currentFrame);
+	}
 }
 };
 }

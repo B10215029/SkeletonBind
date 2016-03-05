@@ -1,4 +1,5 @@
 #pragma once
+#include <map>
 
 class SkeletonData
 {
@@ -21,6 +22,9 @@ public:
 		Joint_Head = 13,
 		Joint_Count = 14
 	};
+	typedef struct _SkeletonFrame {
+		float data[Joint_Count * 2];
+	}SkeletonFrame;
 	static const int JointParent[Joint_Count];
 	static const float JointColor[Joint_Count][3];
 	static const unsigned char drawPointIndices[Joint_Count];
@@ -28,8 +32,12 @@ public:
 	SkeletonData();
 	~SkeletonData();
 	void initialize();
+	void setFrame(int frameNumber);
 	void saveCSV(const char* filePath, int imageWidth, int imageHeight);
-	float data[Joint_Count][2];
+	void readCSV(const char* filePath, int imageWidth, int imageHeight);
+	float* data;
+	std::map<int, SkeletonFrame> allData;
+	int currentFrame;
 
 private:
 

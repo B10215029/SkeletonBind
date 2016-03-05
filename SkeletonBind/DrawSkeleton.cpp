@@ -20,9 +20,11 @@ void DrawSkeleton::initialize()
 
 void DrawSkeleton::display(SkeletonData* skeletonData)
 {
+	if (skeletonData->data == NULL)
+		return;
 	glUseProgram(program);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, skeletonData->data[0]);
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, skeletonData->data);
 	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, SkeletonData::JointColor[0]);
 	glEnableVertexAttribArray(1);

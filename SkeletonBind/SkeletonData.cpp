@@ -101,7 +101,9 @@ const unsigned char SkeletonData::drawLineIndices[] = {
 
 SkeletonData::SkeletonData()
 {
-	initialize();
+	currentFrame = 0;
+	data = NULL;
+	allData.clear();
 }
 
 SkeletonData::~SkeletonData()
@@ -110,43 +112,90 @@ SkeletonData::~SkeletonData()
 
 void SkeletonData::initialize()
 {
-	data[0][0] = -0.15;
-	data[0][1] = -0.8;
-	data[1][0] = -0.15;
-	data[1][1] = -0.5;
-	data[2][0] = -0.15;
-	data[2][1] = -0.18;
-	data[3][0] =  0.15;
-	data[3][1] = -0.18;
-	data[4][0] =  0.15;
-	data[4][1] = -0.5;
-	data[5][0] =  0.15;
-	data[5][1] = -0.8;
-	data[6][0] = -0.5;
-	data[6][1] = -0.1;
-	data[7][0] = -0.35;
-	data[7][1] =  0.18;
-	data[8][0] = -0.22;
-	data[8][1] =  0.43;
-	data[9][0] =  0.22;
-	data[9][1] =  0.43;
-	data[10][0] =  0.35;
-	data[10][1] =  0.18;
-	data[11][0] =  0.5;
-	data[11][1] = -0.1;
-	data[12][0] =  0;
-	data[12][1] =  0.5;
-	data[13][0] =  0;
-	data[13][1] =  0.8;
+	if (data == NULL) {
+		allData.emplace(currentFrame, SkeletonFrame());
+		auto d = allData.find(currentFrame);
+		data = d->second.data;
+	}
+	data[0 * 2 + 0] = -0.15;
+	data[0 * 2 + 1] = -0.8;
+	data[1 * 2 + 0] = -0.15;
+	data[1 * 2 + 1] = -0.5;
+	data[2 * 2 + 0] = -0.15;
+	data[2 * 2 + 1] = -0.18;
+	data[3 * 2 + 0] =  0.15;
+	data[3 * 2 + 1] = -0.18;
+	data[4 * 2 + 0] =  0.15;
+	data[4 * 2 + 1] = -0.5;
+	data[5 * 2 + 0] =  0.15;
+	data[5 * 2 + 1] = -0.8;
+	data[6 * 2 + 0] = -0.5;
+	data[6 * 2 + 1] = -0.1;
+	data[7 * 2 + 0] = -0.35;
+	data[7 * 2 + 1] =  0.18;
+	data[8 * 2 + 0] = -0.22;
+	data[8 * 2 + 1] =  0.43;
+	data[9 * 2 + 0] =  0.22;
+	data[9 * 2 + 1] =  0.43;
+	data[10 * 2 + 0] =  0.35;
+	data[10 * 2 + 1] =  0.18;
+	data[11 * 2 + 0] =  0.5;
+	data[11 * 2 + 1] = -0.1;
+	data[12 * 2 + 0] =  0;
+	data[12 * 2 + 1] =  0.5;
+	data[13 * 2 + 0] =  0;
+	data[13 * 2 + 1] =  0.8;
+}
+
+void SkeletonData::setFrame(int frameNumber)
+{
+	currentFrame = frameNumber;
+	auto d = allData.find(currentFrame);
+	if (d != allData.end()) {
+		data = d->second.data;
+	}
+	else {
+		data = NULL;
+	}
 }
 
 void SkeletonData::saveCSV(const char* filePath, int imageWidth, int imageHeight)
 {
 	std::ofstream outputStream(filePath);
-	for (int i = 0; i < Joint_Count; i++) {
-		int x = (1 + data[i][0]) / 2 * imageWidth;
-		int y = (1 - data[i][1]) / 2 * imageHeight;
-		outputStream << x << "," << y << std::endl;
+	for (auto &p : allData) {
+		float* d = p.second.data;
+		outputStream << p.first;
+		for (int i = 0; i < Joint_Count; i++) {
+			int x = (1 + d[i * 2 + 0]) / 2 * imageWidth;
+			int y = (1 - d[i * 2 + 1]) / 2 * imageHeight;
+			outputStream << "," << x << "," << y;
+		}
+		outputStream << std::endl;
 	}
 	outputStream.close();
+}
+
+void SkeletonData::readCSV(const char* filePath, int imageWidth, int imageHeight)
+{
+	std::ifstream inputStream(filePath);
+	allData.clear();
+	int fn;
+	SkeletonFrame sf;
+	char b[256];
+	while (!inputStream.eof()) {
+		inputStream >> fn;
+		inputStream.get();
+		for (int i = 0; i < Joint_Count; i++) {
+			int x, y;
+			inputStream >> x;
+			inputStream.get();
+			inputStream >> y;
+			inputStream.get();
+			sf.data[i * 2 + 0] = (float)x / imageWidth * 2 - 1;
+			sf.data[i * 2 + 1] = (float)y / imageHeight * -2 - 1;
+		}
+		allData.emplace(fn, sf);
+	}
+	inputStream.close();
+	data = NULL;
 }
