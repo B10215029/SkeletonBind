@@ -4,8 +4,8 @@
 #include "resource.h"
 #include "SkeletonData.h"
 
-#define POINT_SIZE 20
-#define LINE_WIDTH 10
+#define POINT_SIZE 8
+#define LINE_WIDTH 5
 
 class DrawSkeleton
 {

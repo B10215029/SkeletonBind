@@ -33,6 +33,8 @@ public:
 	~SkeletonData();
 	void initialize();
 	void setFrame(int frameNumber);
+	int gotoNextFrameByTime();
+	int gotoNextFrameByData();
 	void saveCSV(const char* filePath, int imageWidth, int imageHeight);
 	void readCSV(const char* filePath, int imageWidth, int imageHeight);
 	float* data;

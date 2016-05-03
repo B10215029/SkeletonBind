@@ -159,6 +159,36 @@ void SkeletonData::setFrame(int frameNumber)
 	}
 }
 
+int SkeletonData::gotoNextFrameByTime()
+{
+	auto minData = allData.begin();
+	for (auto it = allData.begin(); it != allData.end(); ++it) {
+		if ((it->first > currentFrame) && ((minData->first <= currentFrame) || (it->first - currentFrame < minData->first - currentFrame))) {
+			minData = it;
+		}
+	}
+	if (minData != allData.end() && minData->first > currentFrame) {
+		currentFrame = minData->first;
+		data = minData->second.data;
+	}
+	return currentFrame;
+}
+
+int SkeletonData::gotoNextFrameByData()
+{
+	auto d = allData.find(currentFrame);
+	if (d != allData.end()) {
+		if (++d != allData.end()) {
+			currentFrame = d->first;
+			data = d->second.data;
+		}
+		return currentFrame;
+	}
+	else {
+		return gotoNextFrameByTime();
+	}
+}
+
 void SkeletonData::saveCSV(const char* filePath, int imageWidth, int imageHeight)
 {
 	std::ofstream outputStream(filePath);
@@ -181,7 +211,6 @@ void SkeletonData::readCSV(const char* filePath, int imageWidth, int imageHeight
 	allData.clear();
 	int fn;
 	SkeletonFrame sf;
-	char b[256];
 	while (!inputStream.eof()) {
 		inputStream >> fn;
 		inputStream.get();

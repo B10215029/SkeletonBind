@@ -1,4 +1,5 @@
 #pragma once
+#pragma comment(linker, "/SUBSYSTEM:windows /ENTRY:main")
 #include <Windows.h>
 #include "DrawTexture.h"
 #include "DrawSkeleton.h"
@@ -162,6 +163,7 @@ private: System::Windows::Forms::ToolStripMenuItem^  openVideoToolStripMenuItem;
 private: System::Windows::Forms::ToolStripMenuItem^  openPictureToolStripMenuItem;
 private: System::Windows::Forms::ToolStripMenuItem^  openCSVToolStripMenuItem;
 private: System::Windows::Forms::CheckBox^  checkBox1;
+private: System::Windows::Forms::Button^  button7;
 
 
 
@@ -192,6 +194,7 @@ private: System::Windows::Forms::CheckBox^  checkBox1;
 			this->tableLayoutPanel1 = (gcnew System::Windows::Forms::TableLayoutPanel());
 			this->tableLayoutPanel2 = (gcnew System::Windows::Forms::TableLayoutPanel());
 			this->button3 = (gcnew System::Windows::Forms::Button());
+			this->checkBox1 = (gcnew System::Windows::Forms::CheckBox());
 			this->tableLayoutPanel3 = (gcnew System::Windows::Forms::TableLayoutPanel());
 			this->button1 = (gcnew System::Windows::Forms::Button());
 			this->button2 = (gcnew System::Windows::Forms::Button());
@@ -201,6 +204,7 @@ private: System::Windows::Forms::CheckBox^  checkBox1;
 			this->tableLayoutPanel4 = (gcnew System::Windows::Forms::TableLayoutPanel());
 			this->label1 = (gcnew System::Windows::Forms::Label());
 			this->label2 = (gcnew System::Windows::Forms::Label());
+			this->button7 = (gcnew System::Windows::Forms::Button());
 			this->menuStrip1 = (gcnew System::Windows::Forms::MenuStrip());
 			this->fileToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->openVideoToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
@@ -209,7 +213,6 @@ private: System::Windows::Forms::CheckBox^  checkBox1;
 			this->openFileDialog1 = (gcnew System::Windows::Forms::OpenFileDialog());
 			this->openFileDialog2 = (gcnew System::Windows::Forms::OpenFileDialog());
 			this->openFileDialog3 = (gcnew System::Windows::Forms::OpenFileDialog());
-			this->checkBox1 = (gcnew System::Windows::Forms::CheckBox());
 			this->panel1->SuspendLayout();
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->trackBar1))->BeginInit();
 			this->statusStrip1->SuspendLayout();
@@ -310,6 +313,7 @@ private: System::Windows::Forms::CheckBox^  checkBox1;
 			this->tableLayoutPanel1->Controls->Add(this->button4, 2, 2);
 			this->tableLayoutPanel1->Controls->Add(this->button5, 3, 2);
 			this->tableLayoutPanel1->Controls->Add(this->tableLayoutPanel4, 0, 0);
+			this->tableLayoutPanel1->Controls->Add(this->button7, 1, 2);
 			this->tableLayoutPanel1->Dock = System::Windows::Forms::DockStyle::Fill;
 			this->tableLayoutPanel1->Location = System::Drawing::Point(0, 24);
 			this->tableLayoutPanel1->Name = L"tableLayoutPanel1";
@@ -347,6 +351,17 @@ private: System::Windows::Forms::CheckBox^  checkBox1;
 			this->button3->Text = L">>\r\n擷取\r\n目前\r\nFrame";
 			this->button3->UseVisualStyleBackColor = true;
 			this->button3->Click += gcnew System::EventHandler(this, &MainForm::button3_Click);
+			// 
+			// checkBox1
+			// 
+			this->checkBox1->AutoSize = true;
+			this->checkBox1->Dock = System::Windows::Forms::DockStyle::Fill;
+			this->checkBox1->Location = System::Drawing::Point(3, 3);
+			this->checkBox1->Name = L"checkBox1";
+			this->checkBox1->Size = System::Drawing::Size(68, 74);
+			this->checkBox1->TabIndex = 1;
+			this->checkBox1->Text = L"自動撥放載入的CSV檔和圖片";
+			this->checkBox1->UseVisualStyleBackColor = true;
 			// 
 			// tableLayoutPanel3
 			// 
@@ -464,6 +479,16 @@ private: System::Windows::Forms::CheckBox^  checkBox1;
 			this->label2->Text = L"Time";
 			this->label2->TextAlign = System::Drawing::ContentAlignment::MiddleCenter;
 			// 
+			// button7
+			// 
+			this->button7->Location = System::Drawing::Point(263, 281);
+			this->button7->Name = L"button7";
+			this->button7->Size = System::Drawing::Size(74, 23);
+			this->button7->TabIndex = 12;
+			this->button7->Text = L"尋找下一筆";
+			this->button7->UseVisualStyleBackColor = true;
+			this->button7->MouseUp += gcnew System::Windows::Forms::MouseEventHandler(this, &MainForm::button7_MouseUp);
+			// 
 			// menuStrip1
 			// 
 			this->menuStrip1->Items->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(1) { this->fileToolStripMenuItem });
@@ -486,21 +511,21 @@ private: System::Windows::Forms::CheckBox^  checkBox1;
 			// openVideoToolStripMenuItem
 			// 
 			this->openVideoToolStripMenuItem->Name = L"openVideoToolStripMenuItem";
-			this->openVideoToolStripMenuItem->Size = System::Drawing::Size(152, 22);
+			this->openVideoToolStripMenuItem->Size = System::Drawing::Size(147, 22);
 			this->openVideoToolStripMenuItem->Text = L"Open Video";
 			this->openVideoToolStripMenuItem->Click += gcnew System::EventHandler(this, &MainForm::openVideoToolStripMenuItem_Click);
 			// 
 			// openPictureToolStripMenuItem
 			// 
 			this->openPictureToolStripMenuItem->Name = L"openPictureToolStripMenuItem";
-			this->openPictureToolStripMenuItem->Size = System::Drawing::Size(152, 22);
+			this->openPictureToolStripMenuItem->Size = System::Drawing::Size(147, 22);
 			this->openPictureToolStripMenuItem->Text = L"Open Picture";
 			this->openPictureToolStripMenuItem->Click += gcnew System::EventHandler(this, &MainForm::openPictureToolStripMenuItem_Click);
 			// 
 			// openCSVToolStripMenuItem
 			// 
 			this->openCSVToolStripMenuItem->Name = L"openCSVToolStripMenuItem";
-			this->openCSVToolStripMenuItem->Size = System::Drawing::Size(152, 22);
+			this->openCSVToolStripMenuItem->Size = System::Drawing::Size(147, 22);
 			this->openCSVToolStripMenuItem->Text = L"Open CSV";
 			this->openCSVToolStripMenuItem->Click += gcnew System::EventHandler(this, &MainForm::openCSVToolStripMenuItem_Click);
 			// 
@@ -515,17 +540,6 @@ private: System::Windows::Forms::CheckBox^  checkBox1;
 			// openFileDialog3
 			// 
 			this->openFileDialog3->FileName = L"openFileDialog3";
-			// 
-			// checkBox1
-			// 
-			this->checkBox1->AutoSize = true;
-			this->checkBox1->Dock = System::Windows::Forms::DockStyle::Fill;
-			this->checkBox1->Location = System::Drawing::Point(3, 3);
-			this->checkBox1->Name = L"checkBox1";
-			this->checkBox1->Size = System::Drawing::Size(68, 74);
-			this->checkBox1->TabIndex = 1;
-			this->checkBox1->Text = L"自動撥放載入的CSV檔和圖片";
-			this->checkBox1->UseVisualStyleBackColor = true;
 			// 
 			// MainForm
 			// 
@@ -561,11 +575,15 @@ private: System::Windows::Forms::CheckBox^  checkBox1;
 		toolStripStatusLabel1->Text = imageFileName;
 		mediaPlayer->Open(gcnew Uri(imageFileName));
 		while (mediaPlayer->DownloadProgress != 1) {
-			std::cout << "not yet" << std::endl;
+			std::cout << "not yet " << mediaPlayer->DownloadProgress << std::endl;
 			System::Threading::Thread::Sleep(0.5 * 1000);
 		}
 		std::cout << "ok" << std::endl;
 		mediaPlayer->Play();
+		//if (!mediaPlayer->HasVideo) {
+		//	std::cout << "not support format" << std::endl;
+		//	return;
+		//}
 		while (!mediaPlayer->NaturalDuration.HasTimeSpan) {
 			std::cout << "not yet" << std::endl;
 			System::Threading::Thread::Sleep(0.5 * 1000);
@@ -604,7 +622,7 @@ private: System::Windows::Forms::CheckBox^  checkBox1;
 		display(hDC1, hGLRC1, drawTexture1, NULL);
 	}
 private: System::Void timer1_Tick(System::Object^  sender, System::EventArgs^  e) {
-	if (!mediaPlayer->HasVideo || !mediaPlayer->NaturalDuration.HasTimeSpan)
+	if (!mediaPlayer->HasVideo)
 		return;
 	System::Windows::Media::Imaging::RenderTargetBitmap^ rtb = gcnew System::Windows::Media::Imaging::RenderTargetBitmap(mediaPlayer->NaturalVideoWidth, mediaPlayer->NaturalVideoHeight, 96, 96, System::Windows::Media::PixelFormats::Pbgra32);
 	System::Windows::Media::DrawingVisual^ dv = gcnew System::Windows::Media::DrawingVisual();
@@ -629,14 +647,14 @@ private: System::Void timer1_Tick(System::Object^  sender, System::EventArgs^  e
 		display(hDC2, hGLRC2, drawTexture2, drawSkeleton2);
 		display(hDC3, hGLRC3, NULL, drawSkeleton3);
 
-		currentFrame = mediaPlayer->Position.TotalSeconds * FRAME_PRE_SECOND;
+		currentFrame = mediaPlayer->Position.TotalSeconds * FRAME_PRE_SECOND + 0.5;
 		skeletonData->setFrame(currentFrame);
 		bitmap = gcnew System::Drawing::Bitmap(rtb->PixelWidth, rtb->PixelHeight, rtb->PixelWidth * rtb->PixelHeight * 4, System::Drawing::Imaging::PixelFormat::Format32bppArgb, IntPtr(dataPtr));
 	}
 
 	if (!isTrackBarMouseDown)
-		trackBar1->Value = mediaPlayer->Position.TotalSeconds * FRAME_PRE_SECOND;
-	label1->Text = "FN:" + System::Convert::ToString((int)(mediaPlayer->Position.TotalSeconds * FRAME_PRE_SECOND)) + "/" + System::Convert::ToString(mediaPlayer->NaturalDuration.TimeSpan.TotalSeconds * FRAME_PRE_SECOND);
+		trackBar1->Value = mediaPlayer->Position.TotalSeconds * FRAME_PRE_SECOND + 0.5;
+	label1->Text = "FN:" + System::Convert::ToString((int)(mediaPlayer->Position.TotalSeconds * FRAME_PRE_SECOND + 0.5)) + "/" + System::Convert::ToString(mediaPlayer->NaturalDuration.TimeSpan.TotalSeconds * FRAME_PRE_SECOND);
 	label2->Text = "Time:" + System::Convert::ToString(mediaPlayer->Position.TotalSeconds) + "/" + System::Convert::ToString(mediaPlayer->NaturalDuration.TimeSpan.TotalSeconds);
 
 }
@@ -732,7 +750,7 @@ private: System::Void button3_Click(System::Object^  sender, System::EventArgs^ 
 	dc->Close();
 	rtb->Render(dv);
 
-	currentFrame = mediaPlayer->Position.TotalSeconds * FRAME_PRE_SECOND;
+	currentFrame = mediaPlayer->Position.TotalSeconds * FRAME_PRE_SECOND + 0.5;
 	skeletonData->setFrame(currentFrame);
 
 	array<byte>^ dataArray = gcnew array<byte>(rtb->PixelWidth * rtb->PixelHeight * rtb->Format.BitsPerPixel / 8);
@@ -782,6 +800,10 @@ private: System::Void openVideoToolStripMenuItem_Click(System::Object^  sender, 
 		}
 		std::cout << "ok" << std::endl;
 		mediaPlayer->Play();
+		//if (!mediaPlayer->HasVideo) {
+		//	std::cout << "not support format" << std::endl;
+		//	return;
+		//}
 		while (!mediaPlayer->NaturalDuration.HasTimeSpan) {
 			std::cout << "not yet" << std::endl;
 			System::Threading::Thread::Sleep(0.5 * 1000);
@@ -818,6 +840,15 @@ private: System::Void openCSVToolStripMenuItem_Click(System::Object^  sender, Sy
 		skeletonData->readCSV(chars, mediaPlayer->NaturalVideoWidth, mediaPlayer->NaturalVideoHeight);
 		skeletonData->setFrame(currentFrame);
 	}
+}
+private: System::Void button7_MouseUp(System::Object^  sender, System::Windows::Forms::MouseEventArgs^  e) {
+	int currentFrame = mediaPlayer->Position.TotalSeconds * FRAME_PRE_SECOND + 0.5;
+	skeletonData->setFrame(currentFrame);
+	if (e->Button == System::Windows::Forms::MouseButtons::Left)
+		currentFrame = skeletonData->gotoNextFrameByTime();
+	else if (e->Button == System::Windows::Forms::MouseButtons::Right)
+		currentFrame = skeletonData->gotoNextFrameByData();
+	mediaPlayer->Position = TimeSpan::FromSeconds(((float)currentFrame) / FRAME_PRE_SECOND);
 }
 };
 }
