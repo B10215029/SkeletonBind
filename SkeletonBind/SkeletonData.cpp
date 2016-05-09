@@ -221,7 +221,7 @@ void SkeletonData::readCSV(const char* filePath, int imageWidth, int imageHeight
 			inputStream >> y;
 			inputStream.get();
 			sf.data[i * 2 + 0] = (float)x / imageWidth * 2 - 1;
-			sf.data[i * 2 + 1] = (float)y / imageHeight * -2 - 1;
+			sf.data[i * 2 + 1] = (float)y / imageHeight * -2 + 1;
 		}
 		allData.emplace(fn, sf);
 	}
