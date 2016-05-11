@@ -1016,6 +1016,10 @@ private: System::Void timer1_Tick(System::Object^  sender, System::EventArgs^  e
 
 		currentFrame = mediaPlayer->Position.TotalSeconds * FRAME_PRE_SECOND + 0.5;
 		skeletonData->setFrame(currentFrame);
+		if (imageDataTemp)
+			free(imageDataTemp);
+		imageDataTemp = (char*)malloc(rtb->PixelWidth * rtb->PixelHeight * 4);
+		memcpy(imageDataTemp, dataPtr, rtb->PixelWidth * rtb->PixelHeight * 4);
 		bitmap = gcnew System::Drawing::Bitmap(rtb->PixelWidth, rtb->PixelHeight, rtb->PixelWidth * rtb->PixelHeight * 4, System::Drawing::Imaging::PixelFormat::Format32bppArgb, IntPtr(dataPtr));
 	}
 
